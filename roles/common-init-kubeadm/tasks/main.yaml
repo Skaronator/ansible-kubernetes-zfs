@@ -1,0 +1,36 @@
+- name: Check if kubeadm has already run
+  stat:
+    path: "/etc/kubernetes/pki/ca.key"
+  register: kubeadm_ca
+
+- name: Init cluster if needed
+  include_tasks: init.yaml
+  when: not kubeadm_ca.stat.exists
+  run_once: yes
+
+- name: Enable kubelet service
+  systemd:
+    name: kubelet
+    daemon_reload: yes
+    state: started
+    enabled: yes
+
+- name: "Check cilium daemonset is working"
+  shell: kubectl --kubeconfig=/etc/kubernetes/admin.conf get pods -n kube-system --selector=k8s-app=cilium --ignore-not-found=true --no-headers | grep "."
+  run_once: true
+  register: check_net
+  ignore_errors: true
+  changed_when: false
+
+# https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/#pod-network
+- name: "Create cilium network daemonset"
+  when: check_net is failed
+  command: kubectl --kubeconfig=/etc/kubernetes/admin.conf create -f https://raw.githubusercontent.com/cilium/cilium/v1.5/examples/kubernetes/1.14/cilium.yaml
+  run_once: true
+
+- name: Copy kube config to local machine
+  fetch:
+    src: /etc/kubernetes/admin.conf 
+    dest: "{{ local_kube_config }}"
+    flat: yes
+  run_once: yes

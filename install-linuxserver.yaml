@@ -3,6 +3,9 @@
     #! Version must be supported by Kubernetes!
     # apt-cache madison docker-ce | grep 18.09
     docker_version: 5:18.09.9~3-0~debian-buster
+    # Folder on the machine running the ansible playbook
+    local_kube_config: /mnt/c/Users/Niklas/.kube/config
   roles:
     - common-install-docker
     - common-install-kubernetes
+    - common-init-kubeadm
