@@ -1,0 +1,52 @@
+- name: Disable swap
+  command: swapoff -a
+  changed_when: False
+
+- name: Remove swapfile from /etc/fstab
+  mount:
+    name: swap
+    fstype: swap
+    state: absent
+
+- name: Switch to legacy iptables
+  shell: |
+    update-alternatives --set iptables /usr/sbin/iptables-legacy
+    update-alternatives --set ip6tables /usr/sbin/ip6tables-legacy
+  changed_when: False
+
+- name: Install kubernetes pre-request
+  apt:
+    name: "{{ packages }}"
+  vars:
+    packages:
+    - apt-transport-https
+    - curl
+
+- name: Add Kubernetes GPG Apt Key
+  apt_key:
+    url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+    state: present
+
+- name: Add Docker Repository
+  apt_repository:
+    repo: deb https://apt.kubernetes.io/ kubernetes-xenial main
+    state: present
+
+- name: Install Kubernetes
+  apt:
+    name: "{{ packages }}"
+  vars:
+    packages:
+    - kubelet
+    - kubeadm
+    - kubectl
+
+- name: Hold Kubernetes version
+  dpkg_selections:
+    name: "{{ item }}"
+    selection: hold
+  with_items:
+    - kubelet
+    - kubeadm
+    - kubectl
+

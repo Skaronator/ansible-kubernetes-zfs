@@ -5,3 +5,4 @@
     docker_version: 5:18.09.9~3-0~debian-buster
   roles:
     - common-install-docker
+    - common-install-kubernetes

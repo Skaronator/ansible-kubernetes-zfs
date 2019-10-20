@@ -9,7 +9,7 @@
     - gnupg2
     - software-properties-common
 
-- name: Add Docker GPG apt Key
+- name: Add Docker GPG Apt Key
   apt_key:
     id: 0EBFCD88
     url: https://download.docker.com/linux/debian/gpg
@@ -41,4 +41,3 @@
     state: restarted
     daemon_reload: yes
     name: docker
-
