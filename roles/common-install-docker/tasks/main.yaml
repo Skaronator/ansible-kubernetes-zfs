@@ -1,0 +1,44 @@
+- name: Install docker pre-request
+  apt:
+    name: "{{ packages }}"
+  vars:
+    packages:
+    - apt-transport-https
+    - ca-certificates
+    - curl
+    - gnupg2
+    - software-properties-common
+
+- name: Add Docker GPG apt Key
+  apt_key:
+    id: 0EBFCD88
+    url: https://download.docker.com/linux/debian/gpg
+    state: present
+
+- name: Add Docker Repository
+  apt_repository:
+    repo: deb [arch=arm64] https://download.docker.com/linux/debian {{ ansible_distribution_release }} stable
+    state: present
+
+- name: Install docker
+  apt:
+    name: "{{ packages }}"
+  vars:
+    packages:
+    - docker-ce={{ docker_version }}
+    - docker-ce-cli={{ docker_version }}
+    - containerd.io
+
+- name: Use systemd instead of cgroupfs
+  register: daemon
+  copy:
+    src: daemon.json
+    dest: /etc/docker/daemon.json
+
+- name: Restart docker deamon
+  when: daemon.changed
+  systemd:
+    state: restarted
+    daemon_reload: yes
+    name: docker
+
