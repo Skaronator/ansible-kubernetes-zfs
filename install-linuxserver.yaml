@@ -1,0 +1,7 @@
+- hosts: vmtest
+  vars:
+    #! Version must be supported by Kubernetes!
+    # apt-cache madison docker-ce | grep 18.09
+    docker_version: 5:18.09.9~3-0~debian-buster
+  roles:
+    - common-install-docker
