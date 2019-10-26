@@ -15,17 +15,27 @@
     state: started
     enabled: yes
 
-- name: "Check cilium daemonset is working"
-  shell: kubectl --kubeconfig=/etc/kubernetes/admin.conf get pods -n kube-system --selector=k8s-app=cilium --ignore-not-found=true --no-headers | grep "."
+# TODO: improve this wait step
+- name: Waiting for kubelet to start
+  pause:
+    seconds: 15
+
+- name: Allow scheduling Pods on Master
+  command: kubectl --kubeconfig=/etc/kubernetes/admin.conf taint nodes --all node-role.kubernetes.io/master-
+  run_once: true
+  when: not kubeadm_ca.stat.exists
+
+- name: Check flannel daemonset is already deployed
+  shell: kubectl --kubeconfig=/etc/kubernetes/admin.conf get ds -n kube-system -l app=flannel --ignore-not-found=true --no-headers | grep "."
   run_once: true
   register: check_net
   ignore_errors: true
   changed_when: false
 
 # https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/#pod-network
-- name: "Create cilium network daemonset"
+- name: Create flannel network daemonset
   when: check_net is failed
-  command: kubectl --kubeconfig=/etc/kubernetes/admin.conf create -f https://raw.githubusercontent.com/cilium/cilium/v1.5/examples/kubernetes/1.14/cilium.yaml
+  command: kubectl --kubeconfig=/etc/kubernetes/admin.conf create -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
   run_once: true
 
 - name: Copy kube config to local machine

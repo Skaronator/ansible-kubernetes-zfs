@@ -4,5 +4,5 @@
 
 - name: Init Kubernetes cluster
   when: reset_cluster is succeeded
-  shell: kubeadm init --pod-network-cidr=10.217.0.0/16
+  shell: kubeadm init --pod-network-cidr=10.244.0.0/16
   register: init_cluster
