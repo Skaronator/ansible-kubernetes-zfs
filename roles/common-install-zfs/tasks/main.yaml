@@ -1,0 +1,57 @@
+- name: Add backports repository
+  apt_repository:
+    repo: deb http://deb.debian.org/debian {{ ansible_distribution_release }}-backports main contrib
+    state: present
+
+- name: Add contrib repository
+  apt_repository:
+    repo: deb http://deb.debian.org/debian {{ ansible_distribution_release }} contrib
+    state: present
+
+- name: Prefer backports for ZFS packages
+  copy:
+    dest: /etc/apt/preferences.d/zfs
+    content: |
+      Package: libnvpair1linux libuutil1linux libzfs2linux libzpool2linux spl-dkms zfs-dkms zfs-test zfsutils-linux zfsutils-linux-dev zfs-zed
+      Pin: release n={{ ansible_distribution_release }}-backports
+      Pin-Priority: 990
+
+- name: Install ZFS pre-request
+  apt:
+    name: "{{ packages }}"
+  vars:
+    packages:
+    - apt-transport-https
+    - dkms
+    - linux-image-amd64
+    - "linux-headers-{{ ansible_kernel }}"
+
+- name: Install ZFS (ignore errors)
+  apt:
+    name: "{{ packages }}"
+  vars:
+    packages:
+    - zfs-dkms
+    - zfsutils-linux
+  ignore_errors: yes
+
+- name: Enable ZFS modprobe
+  modprobe:
+    name: zfs
+    state: present
+
+- name: Install ZFS
+  apt:
+    name: "{{ packages }}"
+  vars:
+    packages:
+    - zfs-dkms
+    - zfsutils-linux
+
+- name: Check ZFS Version
+  command: zfs version
+  register: zfs_version
+
+- name: Installed ZFS Version
+  debug:
+    var: zfs_version.stdout_lines

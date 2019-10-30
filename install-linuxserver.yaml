@@ -6,6 +6,7 @@
     # Folder on the machine running the ansible playbook
     local_kube_config: /mnt/c/Users/Niklas/.kube/config
   roles:
+    - common-install-zfs
     - common-install-docker
     - common-install-kubernetes
     - common-init-kubeadm
